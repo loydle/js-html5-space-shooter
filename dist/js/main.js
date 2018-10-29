@@ -25,11 +25,10 @@ function init() {
         })];
         this.score = 0;
         this.ennemy = [];
-        this.ennemy.push(new Ennemy(1));
         this.explosion = [];
         this.config = {
             game: {
-                title: 'Invader',
+                title: 'SpaceWar',
                 version: '0.0.1',
                 width: width,
                 height: height,
@@ -42,7 +41,6 @@ function init() {
             },
         };
 
-        // --- methods
         this.getLevel = () => {
             return this.level;
         }
@@ -76,12 +74,21 @@ function init() {
 
         this.render =
             () => {
-                requestAnimationFrame(this.render);
+                var play = requestAnimationFrame(this.render);
+                if (this.players[0].life <= 0) {
+                    this.isGameOver = true;
 
+                }
+                if (this.isGameOver) {
+                    this.gameOver(this)
+                } else {
+                    // cancelAnimationFrame(play);
+                }
                 this.drawBackgroundImage(
                     this.ctx,
                     this.level,
                 );
+
 
                 this.drawBulletImage(
                     this.ctx,
@@ -92,6 +99,7 @@ function init() {
                     this.ctx,
                     this.players,
                 );
+
 
                 if (this.getScore() > 0) {
                     this.fillGameInfosText(
@@ -115,6 +123,7 @@ function init() {
                     "20px ING Me", '#FFF',
                 );
 
+
                 this.fillGameInfosText(
                     this.ctx,
                     'Level ' + this.getLevel().level,
@@ -123,14 +132,15 @@ function init() {
                     "20px ING Me", '#FFF',
                 );
 
-                this.fillGameInfosSquare(this.ctx, '2', '#ccc', 40, 25, 140, 70);
+                this.fillGameInfosSquare(this.ctx, '2', '#ccc', 40, 25, 160, 70);
 
                 // Add Ennemy
                 if (
                     (this.ennemy.length <= 0) ||
                     (this.ennemy[this.ennemy.length - 1].position.y > 100)
                 ) {
-                    this.ennemy.push(new Ennemy(1));
+                    this.ennemy.push(new Ennemy(Math.round(Math.random() * 9 + 1)));
+
                 }
 
                 this.drawEnnemyImage(
@@ -141,6 +151,10 @@ function init() {
                 this.drawExplosionImage(
                     this.ctx,
                     this.explosion,
+                );
+                this.drawPlayerLifeImage(
+                    this.ctx,
+                    this.players,
                 );
             };
 
@@ -263,6 +277,9 @@ function init() {
 
                 if (playerTouchedEnnemy) {
                     ennemy.life = 0;
+
+                    p[0].life -= 1;
+
                     this.setScore(-500)
                 }
 
@@ -288,17 +305,24 @@ function init() {
                 ctx.stroke();
             }
         }
-
+        let tickCount = 1;
+        let frameIndex = 0;
         this.drawPlayerImage =
             (ctx, playersArray) => {
                 const img = new Image();
                 img.src = playersArray[0].skin.src;
                 this.hitbox = this.playersHitbox(ctx, playersArray, this.config)
+
+                tickCount += 1;
+                let numberOfFrames = playersArray[0].skin.position.steps.length;
+                if (tickCount >= numberOfFrames) {
+                    tickCount = 0;
+                }
                 img.onload = () => {
                     ctx.drawImage(
                         img,
                         playersArray[0].skin.position.steps[0].x,
-                        playersArray[0].skin.position.steps[0].y,
+                        playersArray[0].skin.position.steps[tickCount].y,
                         playersArray[0].skin.position.steps[0].width,
                         playersArray[0].skin.position.steps[0].height,
                         playersArray[0].skin.position.x - playersArray[0].skin.position.steps[0].width / 2,
@@ -306,7 +330,32 @@ function init() {
                         playersArray[0].skin.position.steps[0].width * playersArray[0].skin.scale,
                         playersArray[0].skin.position.steps[0].height * playersArray[0].skin.scale,
                     );
+
                 };
+            };
+
+        this.drawPlayerLifeImage =
+            (ctx, playersArray) => {
+                const img = new Image();
+                img.src = './img/spritesheets/custom-sprites.png';
+                img.onload = () => {
+                    for (let i = 0; i < playersArray[0].life; i++) {
+                        var y = (50 * i)
+                        y += window.innerWidth - (50 * playersArray[0].life) - 20; // 50 => width
+                        ctx.drawImage(
+                            img,
+                            430,
+                            0,
+                            30,
+                            30,
+                            y,
+                            10,
+                            50,
+                            50,
+                        );
+
+                    };
+                }
             };
 
         this.drawEnnemyImage =
@@ -345,6 +394,7 @@ function init() {
                     }
                 });
             };
+
 
         this.drawBulletImage =
             (ctx, player) => {
@@ -401,13 +451,46 @@ function init() {
                     level.background.position.y[0] = level.background.position.default.y[0];
                 };
             };
+
+        this.gameOver = (game) => {
+            this.fillGameInfosText(
+                this.ctx,
+                '[Press ENTER]',
+                window.innerWidth / 2 - 250,
+                window.innerHeight / 2 + 300,
+                "80px ING Me", '#FFF',
+            );
+
+            var img = new Image();
+            img.src = './img/spritesheets/game-over.png';
+            game.ctx.drawImage(
+                img,
+                0,
+                0,
+                87,
+                63,
+                window.innerWidth - 870,
+                (window.innerHeight - 630) / 2,
+                870,
+                630,
+            );
+            window.addEventListener('keydown', (e) => {
+                if (e.keyCode === 13) {
+                    game.isGameOver = false;
+                    game.players[0].life = 4;
+                }
+            })
+        }
+
         console.log(this.players);
     };
 
     function Player(object) {
         this.nickname = object.nickname;
         this.skin = object.skin;
+        this.life = 4;
         this.fireballs = [];
+        this.highScore = this.highScore || 0;
         return this;
     }
 
@@ -438,10 +521,19 @@ function init() {
                         height: 67,
                     }, {
                         x: 90,
-                        y: 0,
+                        y: 67,
                         width: 46,
                         height: 67,
                     }], 1.7)
+                break;
+            case 2:
+                ship = new ShipConfig('./img/spritesheets/player-1.png',
+                    window.innerWidth / 2 - 23, window.innerHeight - 200, [{
+                        x: 0,
+                        y: 0,
+                        width: 46,
+                        height: 61,
+                    }], 4)
                 break;
             default:
         }
@@ -453,19 +545,7 @@ function init() {
                 position: {
                     x: startX,
                     y: startY,
-                    steps: [{
-                            x: steps[0].x,
-                            y: steps[0].y,
-                            width: steps[0].width,
-                            height: steps[0].height,
-                        },
-                        {
-                            x: steps[1].x,
-                            y: steps[1].y,
-                            width: steps[1].width,
-                            height: steps[1].height,
-                        }
-                    ]
+                    steps: steps,
                 }
             }
         }
@@ -514,11 +594,90 @@ function init() {
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
-                        width: 100,
-                        height: 100,
+                        width: 120,
+                        height: 140,
                     }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 2);
                 break;
+            case 2:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-2.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 130,
+                        height: 140,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 2);
+                break;
+            case 3:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-3.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 120,
+                        height: 140,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 2);
+                break;
+            case 4:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-4.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 80,
+                        height: 100,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
+                break;
+            case 5:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-5.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 80,
+                        height: 100,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
+                break;
+            case 6:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-6.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 80,
+                        height: 100,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
+                break;
+            case 7:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-7.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 80,
+                        height: 100,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
+                break;
+            case 8:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-8.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 80,
+                        height: 100,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
+                break;
+            case 9:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-9.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 120,
+                        height: 140,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
+                break;
             default:
+                ennemy = new ennemyConfig('./img/spritesheets/ennemy-4.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 100,
+                        height: 100,
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
         }
 
         function ennemyConfig(src, startX, startY, steps, speed, scale, life) {
@@ -530,12 +689,7 @@ function init() {
                 position: {
                     x: startX,
                     y: startY,
-                    steps: [{
-                        x: steps[0].x,
-                        y: steps[0].y,
-                        width: steps[0].width,
-                        height: steps[0].height,
-                    }]
+                    steps: steps
                 }
             }
         }

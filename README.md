@@ -3,4 +3,4 @@ A simple JS &amp; HTML5 Space Shooter game.
 
 open /dist/index.html
 
-![screenshot](https://i.imgur.com/4M4LEIu.png)
+![screenshot](https://i.imgur.com/mupsZrg.png)

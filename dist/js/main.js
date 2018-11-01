@@ -24,7 +24,7 @@ function init() {
             skin: new Ship(1),
         })];
         this.score = 0;
-        this.ennemy = [];
+        this.enemy = [];
         this.explosion = [];
         this.config = {
             game: {
@@ -80,7 +80,9 @@ function init() {
 
                 }
                 if (this.isGameOver) {
-                    this.gameOver(this)
+                    this.gameOver(this);
+
+
                 } else {
                     // cancelAnimationFrame(play);
                 }
@@ -134,18 +136,18 @@ function init() {
 
                 this.fillGameInfosSquare(this.ctx, '2', '#ccc', 40, 25, 160, 70);
 
-                // Add Ennemy
+                // Add Enemy
                 if (
-                    (this.ennemy.length <= 0) ||
-                    (this.ennemy[this.ennemy.length - 1].position.y > 100)
+                    (this.enemy.length <= 0) ||
+                    (this.enemy[this.enemy.length - 1].position.y > 100)
                 ) {
-                    this.ennemy.push(new Ennemy(Math.round(Math.random() * 9 + 1)));
+                    this.enemy.push(new Enemy(Math.round(Math.random() * 9)));
 
                 }
 
-                this.drawEnnemyImage(
+                this.drawEnemyImage(
                     this.ctx,
-                    this.ennemy,
+                    this.enemy,
                 );
 
                 this.drawExplosionImage(
@@ -238,45 +240,45 @@ function init() {
             }
         }
 
-        this.killEnnemy = (ctx, ennemyArray, en, fireballArray, f, explosion) => {
+        this.killEnemy = (ctx, enemyArray, en, fireballArray, f, explosion) => {
             var ex = new Explosion(1);
             ex.position.x = en.position.x;
             ex.position.y = en.position.y;
             explosion.push(ex);
             if (en.life <= 0 || en.position.y > window.innerHeight) {
-                ennemyArray.splice(ennemyArray.indexOf(en), 1);
+                enemyArray.splice(enemyArray.indexOf(en), 1);
                 this.setScore(150)
             }
             fireballArray.splice(fireballArray.indexOf(f), 1);
         }
 
-        this.ennemyHitbox = (ctx, ennemy, p, config, ennemyArray, explosion) => {
-            var playerTouchedEnnemy = (
+        this.enemyHitbox = (ctx, enemy, p, config, enemyArray, explosion) => {
+            var playerTouchedEnemy = (
                 (p[0].skin.position.y <=
-                    ennemy.position.y + ennemy.position.steps[0].height &&
+                    enemy.position.y + enemy.position.steps[0].height &&
                     p[0].skin.position.y >=
-                    ennemy.position.y - ennemy.position.steps[0].height) &&
-                (p[0].skin.position.x >= ennemy.position.x - ennemy.position.steps[0].width / 2 &&
-                    p[0].skin.position.x <= ennemy.position.x + ennemy.position.steps[0].width)
+                    enemy.position.y - enemy.position.steps[0].height) &&
+                (p[0].skin.position.x >= enemy.position.x - enemy.position.steps[0].width / 2 &&
+                    p[0].skin.position.x <= enemy.position.x + enemy.position.steps[0].width)
             );
 
             var fireballHasTouch = p[0].fireballs.filter((f) => {
-                return (f.y <= ennemy.position.y + ennemy.position.steps[0].height &&
-                        f.y >= ennemy.position.y - ennemy.position.steps[0].height) &&
-                    (f.x >= ennemy.position.x - ennemy.position.steps[0].width / 2 &&
-                        f.x <= ennemy.position.x + ennemy.position.steps[0].width)
+                return (f.y <= enemy.position.y + enemy.position.steps[0].height &&
+                        f.y >= enemy.position.y - enemy.position.steps[0].height) &&
+                    (f.x >= enemy.position.x - enemy.position.steps[0].width / 2 &&
+                        f.x <= enemy.position.x + enemy.position.steps[0].width)
             });
 
-            if (playerTouchedEnnemy || fireballHasTouch[0]) {
+            if (playerTouchedEnemy || fireballHasTouch[0]) {
                 if (fireballHasTouch[0]) {
-                    ennemy.life -= 1;
+                    enemy.life -= 1;
                     this.setScore(50)
                 }
 
-                this.killEnnemy(ctx, ennemyArray, ennemy, p[0].fireballs, fireballHasTouch[0], explosion);
+                this.killEnemy(ctx, enemyArray, enemy, p[0].fireballs, fireballHasTouch[0], explosion);
 
-                if (playerTouchedEnnemy) {
-                    ennemy.life = 0;
+                if (playerTouchedEnemy) {
+                    enemy.life = 0;
 
                     p[0].life -= 1;
 
@@ -297,10 +299,10 @@ function init() {
                 ctx.beginPath();
                 ctx.lineWidth = config.game.cheat.hitbox.lineWidth;
                 ctx.rect(
-                    ennemy.position.x,
-                    ennemy.position.y,
-                    ennemy.position.steps[0].width,
-                    ennemy.position.steps[0].height
+                    enemy.position.x,
+                    enemy.position.y,
+                    enemy.position.steps[0].width,
+                    enemy.position.steps[0].height
                 );
                 ctx.stroke();
             }
@@ -358,24 +360,24 @@ function init() {
                 }
             };
 
-        this.drawEnnemyImage =
-            (ctx, ennemy) => {
-                ennemy.map((en) => {
+        this.drawEnemyImage =
+            (ctx, enemy) => {
+                enemy.map((en) => {
                     // Hitbox rectangle
-                    this.hitbox = this.ennemyHitbox(
+                    this.hitbox = this.enemyHitbox(
                         ctx,
                         en,
                         this.players,
                         this.config,
-                        this.ennemy,
+                        this.enemy,
                         this.explosion
                     );
 
 
                     if (en.position.y > window.innerHeight) {
-                        // remove ennemy if oob
-                        ennemy.splice(
-                            ennemy.indexOf(en), 1
+                        // remove enemy if oob
+                        enemy.splice(
+                            enemy.indexOf(en), 1
                         );
 
                     } else {
@@ -455,25 +457,32 @@ function init() {
         this.gameOver = (game) => {
             this.fillGameInfosText(
                 this.ctx,
+                'GAME OVER',
+                window.innerWidth / 2 - 210,
+                window.innerHeight / 2,
+                "80px ING Me", '#FFF',
+            );
+            this.fillGameInfosText(
+                this.ctx,
                 '[Press ENTER]',
                 window.innerWidth / 2 - 250,
                 window.innerHeight / 2 + 300,
                 "80px ING Me", '#FFF',
             );
 
-            var img = new Image();
-            img.src = './img/spritesheets/game-over.png';
-            game.ctx.drawImage(
-                img,
-                0,
-                0,
-                87,
-                63,
-                window.innerWidth - 870,
-                (window.innerHeight - 630) / 2,
-                870,
-                630,
-            );
+            // var img = new Image();
+            // img.src = './img/spritesheets/game-over.png';
+            // game.ctx.drawImage(
+            //     img,
+            //     0,
+            //     0,
+            //     87,
+            //     63,
+            //     window.innerWidth - 870,
+            //     (window.innerHeight - 630) / 2,
+            //   window.innerWidth/2,
+            //     630,
+            // );
             window.addEventListener('keydown', (e) => {
                 if (e.keyCode === 13) {
                     game.isGameOver = false;
@@ -586,38 +595,38 @@ function init() {
         }
     }
 
-    function Ennemy(int) {
-        var ennemy = {};
+    function Enemy(int) {
+        var enemy = {};
         switch (int) {
             case 1:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-1.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-1.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
                         width: 120,
                         height: 140,
-                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 2);
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
             case 2:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-2.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-2.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
                         width: 130,
                         height: 140,
-                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 2);
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
             case 3:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-3.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-3.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
                         width: 120,
                         height: 140,
-                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 2);
+                    }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
             case 4:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-4.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-4.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
@@ -626,7 +635,7 @@ function init() {
                     }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
             case 5:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-5.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-5.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
@@ -635,7 +644,7 @@ function init() {
                     }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
             case 6:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-6.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-6.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
@@ -644,7 +653,7 @@ function init() {
                     }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
             case 7:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-7.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-7.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
@@ -653,7 +662,7 @@ function init() {
                     }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
             case 8:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-8.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-8.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
@@ -662,7 +671,7 @@ function init() {
                     }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
             case 9:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-9.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-9.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
@@ -670,8 +679,17 @@ function init() {
                         height: 140,
                     }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
                 break;
+            case 10:
+                enemy = new enemyConfig('./img/spritesheets/enemy-10.png',
+                    Number((Math.random() * 1000).toFixed(0)), -100, [{
+                        x: 0,
+                        y: 0,
+                        width: 350,
+                        height: 340,
+                    }], 1, 2, 100);
+                break;
             default:
-                ennemy = new ennemyConfig('./img/spritesheets/ennemy-4.png',
+                enemy = new enemyConfig('./img/spritesheets/enemy-4.png',
                     Number((Math.random() * 1000).toFixed(0)), -100, [{
                         x: 0,
                         y: 0,
@@ -680,7 +698,7 @@ function init() {
                     }], Number(((Math.random() + 1) * 2.2).toFixed(0)), 2, 1);
         }
 
-        function ennemyConfig(src, startX, startY, steps, speed, scale, life) {
+        function enemyConfig(src, startX, startY, steps, speed, scale, life) {
             return {
                 src: src,
                 scale: scale,
@@ -693,7 +711,7 @@ function init() {
                 }
             }
         }
-        return ennemy;
+        return enemy;
     }
 
     function Explosion(int) {
